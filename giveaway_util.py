@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
 
-from user_password import user_password, tag_friends
+
 
 import numpy as np
 from time import time
@@ -22,7 +22,7 @@ import sys
 import logging
 
 class GiveawayActions():
-    def __init__(self, data, user, password):
+    def __init__(self, data, user, password, tag_friends):
         self.cur_time = time()
         self.data = data
         self.driver = webdriver.Chrome(ChromeDriverManager().install())   #old way: installed the latest chromedriver each time => inefficient
@@ -30,8 +30,20 @@ class GiveawayActions():
         self.user = user
         self.pw = password
         self.tag_friends = tag_friends
+
+        logger = logging.getLogger('get_free_stuff')
+        # Create the Handler for logging data to a file
+        logger_handler = logging.FileHandler('get_free_stuff.log', 'w')
+        logger_handler.setLevel(logging.DEBUG)
+        # Create a Formatter for formatting the log messages
+        logger_formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+        # Add the Formatter to the Handler
+        logger_handler.setFormatter(logger_formatter)
+        # Add the Handler to the Logger
+        logger.addHandler(logger_handler)
         logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger('get_free_stuff')
+        self.logger = logger
+
         self.go_next = False
         self.users_followed = {str(self.cur_time):[]}
         self.error_count = 0 
@@ -100,7 +112,7 @@ class GiveawayActions():
         try:
             WebDriverWait(self.driver, 5) \
                 .until(EC.element_to_be_clickable((By.CSS_SELECTOR, "textarea.Ypffh"))).click()
-            comment = (' ').join(tag_friends)
+            comment = (' ').join(self.tag_friends)
             # Removing emojis -> error with Chrome
             comment_addition = ['','','','','','','','',' !!!',' :) ', ' :) ', ' :) ', ' :) ', ' :) ', ' :) ', ' :) '' a must!', ' big dreams!', ' fingers crossed', " today is my lucky day"]
             index_add = np.random.randint(0,len(comment_addition))
@@ -246,20 +258,15 @@ class GiveawayActions():
                 self.comment()
                 sleep(np.random.uniform(5,20))
 
-                if time()-self.cur_time > 7200:
-                    self.logger.warning("Raising excpetion, too long")
+                if time()-self.cur_time > 3600:
+                    self.logger.warning("Raising exception, too long")
                     raise Exception
-
-
 
         except Exception as e:
             self.logger.warning(f"Error: {e}")
             self.logger.info(f"commented {count} times!")
         
         
-
-        
-
         # with open('stats.json', 'w') as outfile:
         #     json.dump(stats, outfile, indent=4)
         #     outfile.close()
